@@ -84,13 +84,14 @@ while True:
     # 1 - login
     # 2 - signup
     # else - exit
-    choice = input("1 - login\n2 - signup\nelse - exit\n")
+    choice = input("1 - login\n2 - signup\n3 - upload script\n4 - remove script\nelse - exit\n")
     if choice == "1":
         # we want to login
         username = input("username: ")
         password = input("password: ")
         request = centralize_message(Command.LOGIN.value-1, {"username": username, "password": password})
         # send the request
+        print(request)
         s.send(request)
         # get the response
         response = s.recv(1024)
@@ -104,6 +105,34 @@ while True:
         password = input("password: ")
         request = centralize_message(Command.SIGNUP.value-1, {"username": username, "password": password})
         # send the request
+        print(request)
+        s.send(request)
+        # get the response
+        response = s.recv(1024)
+        # decentralize the response
+        header, dict = decentralize_message(response)
+        # print the response
+        print(dict)
+    elif choice == "3":
+        # we want to upload a script
+        script_name = input("script name: ")
+        script = 'print("hello world")'
+        request = centralize_message(Command.UPLOAD_SCRIPT.value-1, {"scriptName": script_name, "script": script})
+        # send the request
+        print(request)
+        s.send(request)
+        # get the response
+        response = s.recv(1024)
+        # decentralize the response
+        header, dict = decentralize_message(response)
+        # print the response
+        print(dict)
+    elif choice == "4":
+        # we want to get a script
+        script_name = input("script name: ")
+        request = centralize_message(Command.REMOVE_SCRIPT.value-1, {"scriptName": script_name})
+        # send the request
+        print(request)
         s.send(request)
         # get the response
         response = s.recv(1024)

@@ -1,9 +1,11 @@
-package userman
+package account
 
 import (
 	"botify/main/db"
+	"botify/main/logger"
 	"crypto/sha256"
 	"encoding/hex"
+	"os"
 )
 
 type User struct {
@@ -23,10 +25,12 @@ func (u *User) Login(username string, password string, db db.Database) {
 	u.username = username
 	u.password = hashedPassword
 	u.confirmed = db.IsValidUser(u.username, u.password)
-	u.id = db.GetIdFromUsername(u.username)
+	// log all the data of the user
+	u.id = db.GetIdFromName(u.username, "user")
 
 	// if id is -1, the user was not found
 	if u.id == -1 {
+		logger.Warn("user: " + u.username + " with password: " + u.password + " was not found")
 		u.confirmed = false
 	}
 }
@@ -64,6 +68,24 @@ func (u *User) Signup(username string, password string, email string, phone stri
 	}
 }
 
+// create folders for the user
+func (u *User) CreateFolders() {
+	// check if userdata exists
+	if _, err := os.Stat("userdata"); os.IsNotExist(err) {
+		os.Mkdir("userdata", 0777)
+	}
+
+	// check if userdata/<username> exists
+	if _, err := os.Stat("userdata/" + u.username); os.IsNotExist(err) {
+		os.Mkdir("userdata/"+u.username, 0777)
+	}
+
+	// check if userdata/<username>/scripts exists
+	if _, err := os.Stat("userdata/" + u.username + "/scripts"); os.IsNotExist(err) {
+		os.Mkdir("userdata/"+u.username+"/scripts", 0777)
+	}
+}
+
 // delete a user
 func (u *User) Delete(db db.Database) {
 	// use the database
@@ -98,4 +120,18 @@ func (u *User) GetPhone() string {
 
 func (u *User) IsConfirmed() bool {
 	return u.confirmed
+}
+
+// get a user by id
+func GetUserById(id int, db db.Database) User {
+	var u User
+	u.id = id
+	u.username = db.GetFieldById(id, "name", "user")
+	u.password = db.GetFieldById(id, "password", "user")
+	u.email = db.GetFieldById(id, "email", "user")
+	u.phone = db.GetFieldById(id, "phone", "user")
+	// try to login the user
+	u.Login(u.username, u.password, db)
+
+	return u
 }

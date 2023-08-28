@@ -27,6 +27,25 @@ func Info(info string) {
 	infL.Println(info)
 }
 
+// create a logFile for versions that will get the message and the log file
+func ErrorFile(err error, logFile *os.File) {
+	errorL.SetOutput(logFile)
+	errorL.Println(err)
+	errorL.SetOutput(newLogWriter("[ERROR]"))
+}
+
+func WarnFile(warning string, logFile *os.File) {
+	warnL.SetOutput(logFile)
+	warnL.Println(warning)
+	warnL.SetOutput(newLogWriter("[WARNING]"))
+}
+
+func InfoFile(info string, logFile *os.File) {
+	infL.SetOutput(logFile)
+	infL.Println(info)
+	infL.SetOutput(newLogWriter("[INFO]"))
+}
+
 // a custom writer that formats the log messages
 type logWriter struct {
 	prefix string // the prefix to add before the message
