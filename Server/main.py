@@ -81,10 +81,7 @@ print(dict)
 
 # create a menu
 while True:
-    # 1 - login
-    # 2 - signup
-    # else - exit
-    choice = input("1 - login\n2 - signup\n3 - upload script\n4 - remove script\nelse - exit\n")
+    choice = input("1 - login\n2 - signup\n3 - upload script\n4 - remove script\n5 - edit script\nelse - exit\n")
     if choice == "1":
         # we want to login
         username = input("username: ")
@@ -140,6 +137,31 @@ while True:
         header, dict = decentralize_message(response)
         # print the response
         print(dict)
+    elif choice == "5":
+        # same as upload script but the user can write his own script
+        # read multy line input until the two last lines are empty
+        script_name = input("script name: ")
+        script = ""
+
+        print("write your script, when you finish write two empty lines")
+
+        while True:
+            line = input()
+            if line == "":
+                break
+            script += line + "\n"
+        
+        request = centralize_message(Command.UPLOAD_SCRIPT.value-1, {"scriptName": script_name, "script": script})
+        # send the request
+        print(request)
+        s.send(request)
+        # get the response
+        response = s.recv(1024)
+        # decentralize the response
+        header, dict = decentralize_message(response)
+        # print the response
+        print(dict)
+
     else:
         # we want to exit
         break

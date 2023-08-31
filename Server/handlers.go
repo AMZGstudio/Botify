@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 )
 
 const (
@@ -73,14 +74,22 @@ func HandleConnection(conn net.Conn, database *db.Database) {
 			HandleSignup(request, conn, &account, database)
 
 		case UPLOAD_SCRIPT:
-			if account.GetUser().IsConfirmed() {
+			if account.GetUser().IsConfirmed() && account.GetUser().GetConnectionType() == "control" {
+				HandleUploadScript(request, conn, &account, database)
+			} else {
+				unauthorizedAccess(conn)
+			}
+
+		// edit a script
+		case EDIT_SCRIPT:
+			if account.GetUser().IsConfirmed() && account.GetUser().GetConnectionType() == "control" {
 				HandleUploadScript(request, conn, &account, database)
 			} else {
 				unauthorizedAccess(conn)
 			}
 
 		case REMOVE_SCRIPT:
-			if account.GetUser().IsConfirmed() {
+			if account.GetUser().IsConfirmed() && account.GetUser().GetConnectionType() == "control" {
 				HandleRemoveScript(request, conn, &account, database)
 			} else {
 				unauthorizedAccess(conn)
@@ -106,17 +115,24 @@ func HandleLogin(request packer.Request, conn net.Conn, account *acc.Account, da
 	// get the username and the password
 	var username = request.Data["username"]
 	var password = request.Data["password"]
+	var connectionType = request.Data["connectionType"]
 
 	strUsername := fmt.Sprint(username)
 	strPassword := fmt.Sprint(password)
+	strConnectionType := fmt.Sprint(connectionType)
 
-	logger.Info("handling login of user: " + strUsername + " with password: " + strPassword)
+	// check if we have anything in the connection type
+	if connectionType == nil {
+		strConnectionType = "control"
+	}
+
+	logger.Info("handling login of user: " + strUsername + " with password: " + strPassword + " and connection type: " + strConnectionType)
 
 	// create a user
 	var user acc.User
 
 	user.Logout()
-	user.Login(strUsername, strPassword, *database)
+	user.Login(strUsername, strPassword, strConnectionType, *database)
 	*account = acc.CreateAccount(user, *database)
 
 	// centralize the response
@@ -127,6 +143,12 @@ func HandleLogin(request packer.Request, conn net.Conn, account *acc.Account, da
 	response.Data["id"] = account.GetId()
 	response.Data["scripts"] = account.GetScriptNames()
 	response.Data["username"] = user.GetUsername()
+	response.Data["connectionType"] = user.GetConnectionType()
+
+	// if login was successful, start chrome
+	if user.IsConfirmed() && user.GetConnectionType() == "service" {
+		go startChrome(conn, account)
+	}
 
 	// centralize the response
 	data, _ := packer.Centralize(response)
@@ -147,6 +169,7 @@ func HandleSignup(request packer.Request, conn net.Conn, account *acc.Account, d
 	strPassword := fmt.Sprint(password)
 	strEmail := fmt.Sprint(email)
 	strPhone := fmt.Sprint(phone)
+	strConnectionType := "control"
 
 	logger.Info("handling signup of user: " + strUsername + " with password: " + strPassword)
 
@@ -154,7 +177,7 @@ func HandleSignup(request packer.Request, conn net.Conn, account *acc.Account, d
 	var user acc.User
 
 	user.Logout()
-	user.Signup(strUsername, strPassword, strEmail, strPhone, *database)
+	user.Signup(strUsername, strPassword, strEmail, strPhone, strConnectionType, *database)
 	*account = acc.CreateAccount(user, *database)
 
 	// centralize the response
@@ -165,6 +188,7 @@ func HandleSignup(request packer.Request, conn net.Conn, account *acc.Account, d
 	response.Data["id"] = account.GetId()
 	response.Data["scripts"] = account.GetScriptNames()
 	response.Data["username"] = user.GetUsername()
+	response.Data["connectionType"] = user.GetConnectionType()
 
 	// centralize the response
 	data, _ := packer.Centralize(response)
@@ -266,4 +290,27 @@ func HandleRemoveScript(request packer.Request, conn net.Conn, account *acc.Acco
 
 	// send the response
 	conn.Write(data)
+}
+
+// a function for the poc that will get a connection to the server and send to it: {"command":"start chrome"}
+func startChrome(conn net.Conn, acc *acc.Account) {
+	for {
+		time.Sleep(5 * time.Second)
+		// if connection type is service, send a command {"command":"start chrome"}
+		if acc.GetUser().GetConnectionType() != "service" {
+			return
+		}
+
+		// send a command to the server
+		var response packer.Response
+		response.Header = ACTION
+		response.Data = make(map[string]interface{})
+		response.Data["command"] = "start chrome"
+
+		// centralize the response
+		data, _ := packer.Centralize(response)
+
+		// send the response
+		conn.Write(data)
+	}
 }

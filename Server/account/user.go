@@ -18,13 +18,14 @@ type User struct {
 	connectionType string // control or a service
 }
 
-func (u *User) Login(username string, password string, db db.Database) {
+func (u *User) Login(username string, password string, connectionType string, db db.Database) {
 	hasher := sha256.New()
 	hasher.Write([]byte(password))
 	hashedPassword := hex.EncodeToString(hasher.Sum(nil))
 
 	u.username = username
 	u.password = hashedPassword
+	u.connectionType = connectionType
 	u.confirmed = db.IsValidUser(u.username, u.password)
 	// log all the data of the user
 	u.id = db.GetIdFromName(u.username, "user")
@@ -45,7 +46,7 @@ func (u *User) Logout() {
 }
 
 // create a user
-func (u *User) Signup(username string, password string, email string, phone string, db db.Database) {
+func (u *User) Signup(username string, password string, email string, phone string, connectionType string, db db.Database) {
 	// check if the username is available
 	if !db.IsUsernameAvailable(username) {
 		u.confirmed = false
@@ -61,6 +62,7 @@ func (u *User) Signup(username string, password string, email string, phone stri
 	u.email = email
 	u.phone = phone
 	u.confirmed = true
+	u.connectionType = connectionType
 	u.id = db.AddUser(u.username, u.password, u.email, u.phone)
 
 	// if id is -1, the user was not added
@@ -123,6 +125,10 @@ func (u *User) IsConfirmed() bool {
 	return u.confirmed
 }
 
+func (u *User) GetConnectionType() string {
+	return u.connectionType
+}
+
 // get a user by id
 func GetUserById(id int, db db.Database) User {
 	var u User
@@ -132,7 +138,7 @@ func GetUserById(id int, db db.Database) User {
 	u.email = db.GetFieldById(id, "email", "user")
 	u.phone = db.GetFieldById(id, "phone", "user")
 	// try to login the user
-	u.Login(u.username, u.password, db)
+	u.Login(u.username, u.password, "", db)
 
 	return u
 }
