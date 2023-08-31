@@ -1,0 +1,33 @@
+POC:
+    Queries:
+    - Get the computer's current state (On/Off)
+
+    Actions:
+    - Start a program
+
+    Triggers:
+    - When a program starts.
+
+Final:
+    Queries:
+    - Get the computer's current state (On/Off)
+    - Get the computer's battery level
+
+    Actions:
+    - Turn computer off
+    - restart computer
+    - Move mouse
+    - single click
+    - double click
+    - start a program
+    - run a cmd command
+    - kill process
+    - minimize all windows
+    - maximize all windows
+    - Open webpage
+
+    Triggers:
+    - when computer is turned off
+    - when a process starts
+    - when computer is low on battery
+
