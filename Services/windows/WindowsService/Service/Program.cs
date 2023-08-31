@@ -30,7 +30,8 @@ class MainClass
         Dictionary<string, object> dict = new Dictionary<string, object>
         {
             { "username", "lavi" },
-            { "password", "1111" }
+            { "password", "1111" },
+            { "connectionType", "service" }
         };
 
         Console.WriteLine("Signing in...");
