@@ -116,7 +116,7 @@ while True:
     elif choice == "3":
         # we want to upload a script
         script_name = input("script name: ")
-        script = 'print("hello world")'
+        script = 'print("hello mister")'
         request = centralize_message(Command.UPLOAD_SCRIPT.value-1, {"scriptName": script_name, "script": script})
         # send the request
         print(request)

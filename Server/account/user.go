@@ -9,12 +9,13 @@ import (
 )
 
 type User struct {
-	id        int
-	username  string // unique
-	password  string // hash
-	email     string // if null, no email
-	phone     string // if null, no phone
-	confirmed bool
+	id             int
+	username       string // unique
+	password       string // hash
+	email          string // if null, no email
+	phone          string // if null, no phone
+	confirmed      bool
+	connectionType string // control or a service
 }
 
 func (u *User) Login(username string, password string, db db.Database) {

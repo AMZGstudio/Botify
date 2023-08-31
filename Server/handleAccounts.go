@@ -20,8 +20,8 @@ func handleAccounts(database *db.Database) {
 	for {
 		updateAccounts(&acc, *database)
 		for _, a := range acc {
+			// print the username for debugging
 			for _, s := range a.GetScripts() {
-				// try to find the script in the running list
 				var found bool
 				for _, r := range running {
 					if s.GetId() == r.GetId() {
@@ -32,7 +32,8 @@ func handleAccounts(database *db.Database) {
 				if !found {
 					// run the script
 					running = append(running, s)
-					go runScript(s, a, &running)
+					go runScript(s, a, &running, database)
+
 				}
 			}
 		}
@@ -73,11 +74,19 @@ func updateAccounts(accPtr *[]account.Account, db db.Database) {
 			acc = append(acc, a)
 		}
 	}
+
+	// now remake all the accounts to make sure they are up to date
+	for i, a := range acc {
+		acc[i] = account.CreateAccount(*a.GetUser(), db)
+	}
+
 	*accPtr = acc
 }
 
-func runScript(sc script.Script, acc account.Account, running *[]script.Script) {
+func runScript(sc script.Script, acc account.Account, running *[]script.Script, db *db.Database) {
+	defer removeScriptFiles(sc, db, acc)
 	defer removeScript(sc, running)
+
 	// open or create the log file
 	// if this file does not exist, create it
 	if _, err := os.Stat("userdata/" + acc.GetUser().GetUsername() + "/logs"); os.IsNotExist(err) {
@@ -109,8 +118,8 @@ func runScript(sc script.Script, acc account.Account, running *[]script.Script) 
 
 		time.Sleep(500 * time.Millisecond)
 
-		// check if it has been 1 minute
-		if time.Since(now).Minutes() >= 1 {
+		// check if it has been 10 seconds since the script started
+		if time.Since(now).Seconds() >= 10 {
 			break
 		}
 	}
@@ -124,4 +133,25 @@ func removeScript(sc script.Script, running *[]script.Script) {
 		}
 	}
 	*running = newRunning
+}
+
+// remove script from path and log from path
+func removeScriptFiles(sc script.Script, db *db.Database, acc account.Account) {
+	// get a list of all script ids
+	ids := db.GetScriptIdsFromUid(acc.GetUser().GetId())
+	var remove bool = true
+
+	for _, id := range ids {
+		if id == sc.GetId() {
+			remove = false
+			break
+		}
+	}
+
+	if remove {
+		// remove the script from the path
+		os.Remove("userdata/" + acc.GetUser().GetUsername() + "/scripts/" + sc.GetName() + ".lua")
+		// remove the log from the path
+		os.Remove("userdata/" + acc.GetUser().GetUsername() + "/logs/" + sc.GetName() + ".log")
+	}
 }

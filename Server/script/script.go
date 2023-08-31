@@ -2,7 +2,6 @@ package script
 
 import (
 	"botify/main/db"
-	"os"
 )
 
 // so the script is just a lua file which is kept in the userdata/username/scripts folder
@@ -49,6 +48,5 @@ func CreateScript(uid int, id int, name string, description string, path string)
 
 func (s *Script) DeleteScript(id int, db db.Database) {
 	db.DeleteScript(id)
-	var username string = db.GetFieldById(s.uid, "user", "name")
-	os.Remove("userdata/" + username + "/scripts/" + s.name + ".lua")
+	// the rest will be handled by the script handler
 }

@@ -17,7 +17,6 @@ type Database struct {
 }
 
 // ------ Database functions ------
-
 func (d *Database) SetPath(path string) {
 	d.path = path
 }
@@ -264,7 +263,6 @@ func (d *Database) GetScriptData(id int) (int, int, string, string, string) {
 }
 
 func (d *Database) DeleteScript(id int) {
-	logger.Info("deleting script with id: " + fmt.Sprint(id))
 	if !d.open {
 		d.Open()
 	}
