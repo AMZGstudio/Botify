@@ -13,16 +13,30 @@ class MainClass
         sm = new SocketManager("127.0.0.1", 8080);
 
         NetworkThread();
-    }
-
-    static public async void NetworkThread()
-    {
-        await SignIn();
 
         while (true)
         {
-            await ListenDataAndDoAction();
+
         }
+    }
+
+    static public async Task NetworkThread()
+    {
+        await SignIn();
+
+        Console.WriteLine("Started infinite listening loop...");
+
+        while (true)
+        {
+            try
+            {
+                await ListenDataAndDoAction();
+            } catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+        
     }
 
     static public async Task<bool> SignIn()
@@ -38,20 +52,24 @@ class MainClass
         Console.WriteLine(dict);
 
         var data = Methods.SerializeMessage(RequestType.LOGIN, dict);
+        Console.WriteLine("Sending login... ");
         await sm.SendData(data);
-        await sm.ReceiveData();
+        Console.WriteLine("Recieving data... ");
+        var value = await sm.ReceiveData();
+        Console.WriteLine("Recieved: " + value.toString());
 
         return true;
     }
 
     static public async Task<bool> ListenDataAndDoAction()
     {
+        Console.WriteLine("Receiving data...");
+
         Data? data = await sm.ReceiveData();
+        
+        Console.WriteLine("Recieved: "+ data.toString());
 
-        if (data == null) return false;
-
-        Console.WriteLine(data);
-
+        
         // Accessing the JSON message data
         JsonDocument jsonMessage = data.GetMessageData();
 
