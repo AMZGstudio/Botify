@@ -5,7 +5,6 @@ import socket
 import json
 import enum
 
-
 class Command(enum.Enum):
     LOGIN = enum.auto()
     SIGNUP = enum.auto()
@@ -25,8 +24,8 @@ class Command(enum.Enum):
 # 2. the next 4 bytes are the length of the messege
 # 3. the rest of the bytes are the messege which is a json object
 
-# create a function that centralize a message by header and dict
-def centralize_message(header, dict):
+# create a function that serializes a message by header and dict
+def serialize_message(header, dict):
     # convert the header to bytes
     header = header.to_bytes(2, byteorder="big")
     # convert the dict to a json object
@@ -42,8 +41,8 @@ def centralize_message(header, dict):
     # return the message
     return message
 
-# create a function that decetralize a message
-def decentralize_message(message):
+# create a function that deserializes a message
+def deserialize_message(message):
     # get the header
     header = message[0:2]
     # turn the header to an int
@@ -68,14 +67,14 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect(("127.0.0.1", 8080))
 
 # we want to login
-request = centralize_message(Command.LOGIN.value-1, {"username": "lavi", "password": "1111"})
+request = serialize_message(Command.LOGIN.value-1, {"username": "lavi", "password": "1111"})
 print(request)
 # send the request
 s.send(request)
 # get the response
 response = s.recv(1024)
-# decentralize the response
-header, dict = decentralize_message(response)
+# deserialize the response
+header, dict = deserialize_message(response)
 # print the response
 print(dict)
 
@@ -86,55 +85,55 @@ while True:
         # we want to login
         username = input("username: ")
         password = input("password: ")
-        request = centralize_message(Command.LOGIN.value-1, {"username": username, "password": password})
+        request = serialize_message(Command.LOGIN.value-1, {"username": username, "password": password})
         # send the request
         print(request)
         s.send(request)
         # get the response
         response = s.recv(1024)
         # decentralize the response
-        header, dict = decentralize_message(response)
+        header, dict = deserialize_message(response)
         # print the response
         print(dict)
     elif choice == "2":
         # we want to signup
         username = input("username: ")
         password = input("password: ")
-        request = centralize_message(Command.SIGNUP.value-1, {"username": username, "password": password})
+        request = serialize_message(Command.SIGNUP.value-1, {"username": username, "password": password})
         # send the request
         print(request)
         s.send(request)
         # get the response
         response = s.recv(1024)
         # decentralize the response
-        header, dict = decentralize_message(response)
+        header, dict = deserialize_message(response)
         # print the response
         print(dict)
     elif choice == "3":
         # we want to upload a script
         script_name = input("script name: ")
         script = 'print("hello mister")'
-        request = centralize_message(Command.UPLOAD_SCRIPT.value-1, {"scriptName": script_name, "script": script})
+        request = serialize_message(Command.UPLOAD_SCRIPT.value-1, {"scriptName": script_name, "script": script})
         # send the request
         print(request)
         s.send(request)
         # get the response
         response = s.recv(1024)
         # decentralize the response
-        header, dict = decentralize_message(response)
+        header, dict = deserialize_message(response)
         # print the response
         print(dict)
     elif choice == "4":
         # we want to get a script
         script_name = input("script name: ")
-        request = centralize_message(Command.REMOVE_SCRIPT.value-1, {"scriptName": script_name})
+        request = serialize_message(Command.REMOVE_SCRIPT.value-1, {"scriptName": script_name})
         # send the request
         print(request)
         s.send(request)
         # get the response
         response = s.recv(1024)
         # decentralize the response
-        header, dict = decentralize_message(response)
+        header, dict = deserialize_message(response)
         # print the response
         print(dict)
     elif choice == "5":
@@ -151,14 +150,14 @@ while True:
                 break
             script += line + "\n"
         
-        request = centralize_message(Command.UPLOAD_SCRIPT.value-1, {"scriptName": script_name, "script": script})
+        request = serialize_message(Command.UPLOAD_SCRIPT.value-1, {"scriptName": script_name, "script": script})
         # send the request
         print(request)
         s.send(request)
         # get the response
         response = s.recv(1024)
         # decentralize the response
-        header, dict = decentralize_message(response)
+        header, dict = deserialize_message(response)
         # print the response
         print(dict)
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-func Decentralize(data []byte) (request Request, err error) {
+func Deserialize(data []byte) (request Request, err error) {
 	var header [2]byte
 	var length [4]byte
 
@@ -43,8 +43,8 @@ func Decentralize(data []byte) (request Request, err error) {
 	return
 }
 
-// centralize a response
-func Centralize(response Response) (data []byte, err error) {
+// serialize a response
+func Serialize(response Response) (data []byte, err error) {
 	// convert the header and the length to byte
 	var header [2]byte
 	var length [4]byte

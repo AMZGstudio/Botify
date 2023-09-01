@@ -64,7 +64,7 @@ func HandleConnection(conn net.Conn, database *db.Database) {
 		fullBuf := append(headerBuf, lengthBuf...)
 		fullBuf = append(fullBuf, buf[:n]...)
 
-		request, _ := packer.Decentralize(fullBuf)
+		request, _ := packer.Deserialize(fullBuf)
 
 		switch request.Header {
 		case LOGIN:
@@ -102,8 +102,8 @@ func HandleConnection(conn net.Conn, database *db.Database) {
 			response.Data = make(map[string]interface{})
 			response.Data["hello"] = "world"
 
-			// centralize the response
-			data, _ := packer.Centralize(response)
+			// serialize the response
+			data, _ := packer.Serialize(response)
 
 			// send the response
 			conn.Write(data)
@@ -135,7 +135,7 @@ func HandleLogin(request packer.Request, conn net.Conn, account *acc.Account, da
 	user.Login(strUsername, strPassword, strConnectionType, *database)
 	*account = acc.CreateAccount(user, *database)
 
-	// centralize the response
+	// serialize the response
 	var response packer.Response
 	response.Header = LOGIN
 	response.Data = make(map[string]interface{})
@@ -150,8 +150,8 @@ func HandleLogin(request packer.Request, conn net.Conn, account *acc.Account, da
 		go startChrome(conn, account)
 	}
 
-	// centralize the response
-	data, _ := packer.Centralize(response)
+	// serialize the response
+	data, _ := packer.Serialize(response)
 
 	// send the response
 	conn.Write(data)
@@ -180,7 +180,7 @@ func HandleSignup(request packer.Request, conn net.Conn, account *acc.Account, d
 	user.Signup(strUsername, strPassword, strEmail, strPhone, strConnectionType, *database)
 	*account = acc.CreateAccount(user, *database)
 
-	// centralize the response
+	// serialize the response
 	var response packer.Response
 	response.Header = SIGNUP
 	response.Data = make(map[string]interface{})
@@ -190,8 +190,8 @@ func HandleSignup(request packer.Request, conn net.Conn, account *acc.Account, d
 	response.Data["username"] = user.GetUsername()
 	response.Data["connectionType"] = user.GetConnectionType()
 
-	// centralize the response
-	data, _ := packer.Centralize(response)
+	// serialize the response
+	data, _ := packer.Serialize(response)
 
 	// send the response
 	conn.Write(data)
@@ -225,14 +225,14 @@ func HandleUploadScript(request packer.Request, conn net.Conn, account *acc.Acco
 	// now add the script to the database
 	account.AddScript(strScriptName, "", path, *database)
 
-	// centralize the response
+	// serialize the response
 	var response packer.Response
 	response.Header = UPLOAD_SCRIPT
 	response.Data = make(map[string]interface{})
 	response.Data["confirmed"] = true
 
-	// centralize the response
-	data, _ := packer.Centralize(response)
+	// serialize the response
+	data, _ := packer.Serialize(response)
 
 	// send the response
 	conn.Write(data)
@@ -246,8 +246,8 @@ func unauthorizedAccess(conn net.Conn) {
 	response.Data = make(map[string]interface{})
 	response.Data["error"] = "unauthorized access"
 
-	// centralize the response
-	data, _ := packer.Centralize(response)
+	// serialize the response
+	data, _ := packer.Serialize(response)
 
 	// send the response
 	conn.Write(data)
@@ -268,7 +268,7 @@ func HandleRemoveScript(request packer.Request, conn net.Conn, account *acc.Acco
 		response.Data = make(map[string]interface{})
 		response.Data["error"] = "script not found"
 
-		data, _ := packer.Centralize(response)
+		data, _ := packer.Serialize(response)
 		conn.Write(data)
 
 		return
@@ -279,14 +279,14 @@ func HandleRemoveScript(request packer.Request, conn net.Conn, account *acc.Acco
 	// remove the script from the database
 	account.DeleteScript(scriptId, *database)
 
-	// centralize the response
+	// serialize the response
 	var response packer.Response
 	response.Header = REMOVE_SCRIPT
 	response.Data = make(map[string]interface{})
 	response.Data["confirmed"] = true
 
-	// centralize the response
-	data, _ := packer.Centralize(response)
+	// serialize the response
+	data, _ := packer.Serialize(response)
 
 	// send the response
 	conn.Write(data)
@@ -307,8 +307,8 @@ func startChrome(conn net.Conn, acc *acc.Account) {
 		response.Data = make(map[string]interface{})
 		response.Data["command"] = "start chrome"
 
-		// centralize the response
-		data, _ := packer.Centralize(response)
+		// serialize the response
+		data, _ := packer.Serialize(response)
 
 		// send the response
 		conn.Write(data)
