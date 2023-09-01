@@ -4,12 +4,18 @@ using System.Text.Json;
 
 namespace Service
 {
-    public enum RequestCode { Action, Query };
+    public enum RequestCode { Action, Query, QueryResponse, Trigger };
 
     public class Data
     {
         public RequestCode code { get; private set; }
         public string textData { get; private set; }
+
+        public Data(RequestCode code, string textData)
+        {
+            this.code = code;
+            this.textData = textData;
+        }
 
         public Data(byte[] bytes)
         {
@@ -31,6 +37,25 @@ namespace Service
             {
                 textData = string.Empty; // No text data provided.
             }
+        }
+
+        public byte[] toBytes()
+        {
+            List<byte> bytes = new List<byte>();
+
+            // Convert RequestCode enum to bytes
+            bytes.Add((byte)code);
+
+            // Convert textData to bytes
+            byte[] textDataBytes = Encoding.UTF8.GetBytes(textData);
+
+            // Add the length of textDataBytes as a 4-byte integer
+            bytes.AddRange(BitConverter.GetBytes(textDataBytes.Length));
+
+            // Add the textData bytes
+            bytes.AddRange(textDataBytes);
+
+            return bytes.ToArray();
         }
 
         public JsonDocument GetMessageData()

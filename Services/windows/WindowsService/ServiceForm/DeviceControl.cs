@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Forms;
 
 namespace Service
 {
-    using System;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Linq;
-    using Microsoft.Win32;
-
-    class ProgramStarter
+    
+   class DeviceControl
     {
         public static void StartProgram(string programName)
         {
@@ -31,6 +29,12 @@ namespace Service
             {
                 Console.WriteLine($"Program '{programName}' not found in the PATH.");
             }
+        }
+
+        public static bool IsRunningOnBattery()
+        {
+            bool isRunningOnBattery = (System.Windows.Forms.SystemInformation.PowerStatus.PowerLineStatus == PowerLineStatus.Offline);
+            return isRunningOnBattery;
         }
 
         private static string[] GetMergedPathDirectories()

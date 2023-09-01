@@ -1,4 +1,4 @@
-﻿using Service;
+using Service;
 using System;
 using System.Diagnostics;
 using System.Text.Json;
@@ -31,12 +31,13 @@ class MainClass
             try
             {
                 await ListenDataAndDoAction();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
         }
-        
+
     }
 
     static public async Task<bool> SignIn()
@@ -66,10 +67,10 @@ class MainClass
         Console.WriteLine("Receiving data...");
 
         Data? data = await sm.ReceiveData();
-        
-        Console.WriteLine("Recieved: "+ data.toString());
 
-        
+        Console.WriteLine("Recieved: " + data.toString());
+
+
         // Accessing the JSON message data
         JsonDocument jsonMessage = data.GetMessageData();
 
@@ -79,18 +80,39 @@ class MainClass
             Methods.Error("The Json Data after conversion is null!");
             return false;
         }
-        string command = jsonMessage.RootElement.GetProperty("command").GetString()!;
 
-        Console.WriteLine("recieved command: "+command);
-
-        string[] vals = command.Split(' ');
-        if (vals[0] == "start")
+        if (data.code == RequestCode.Action)
         {
-            Console.WriteLine("Command is start, starting: "+ vals[1]);
-            ProgramStarter.StartProgram(vals[1] + ".exe");
-            return true;
+            string command = jsonMessage.RootElement.GetProperty("action").ToString();
+            Console.WriteLine("received command: " + command);
+
+            string[] vals = command.Split(' ');
+
+            if (vals[0] == "start")
+            {
+                Console.WriteLine("Command is start, starting: " + vals[1]);
+                DeviceControl.StartProgram(vals[1] + ".exe");
+                return true;
+            }
+        }
+        if (data.code == RequestCode.Query)
+        {
+            string query = jsonMessage.RootElement.GetProperty("query").ToString();
+            Console.WriteLine("received command: " + query);
+
+            if (query == "onBattey")
+            {
+                Console.WriteLine("Query is onBattery, checking battery now.");
+                DeviceControl.IsRunningOnBattery();
+
+                var response = new Data(RequestCode.QueryResponse, "{\"onBattery\": \"true\"}");
+                Console.WriteLine("Sending response: "+response.toString());
+                await sm.SendData(response.toBytes());
+
+                return true;
+            }
         }
 
         return false;
-    }    
+    }
 }
