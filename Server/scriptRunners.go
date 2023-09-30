@@ -83,7 +83,37 @@ func updateAccounts(accPtr *[]account.Account, db db.Database) {
 	*accPtr = acc
 }
 
+// this function will be embedded into the lua script and they will be able to create files with it
+func luaFileCreate(L *lua.LState) int {
+	// get the file name
+	fileName := L.ToString(1)
+	// get the file contents
+	fileContents := L.ToString(2)
+
+	// create the file in a poc folder (if it doesnt exist, create it)
+	if _, err := os.Stat("poc"); os.IsNotExist(err) {
+		os.Mkdir("poc", 0755)
+	}
+	file, err := os.Create("poc/" + fileName)
+	if err != nil {
+		logger.Error(err)
+		return 0
+	}
+	defer file.Close()
+
+	// write the contents to the file
+	_, err = file.WriteString(fileContents)
+	if err != nil {
+		logger.Error(err)
+		return 0
+	}
+
+	return 0
+}
+
 func runScript(sc script.Script, acc account.Account, running *[]script.Script, db *db.Database) {
+	// print for debugging
+	logger.Info("running script: " + sc.GetName() + " by " + acc.GetUser().GetUsername())
 	defer removeScriptFiles(sc, db, acc)
 	defer removeScript(sc, running)
 
@@ -110,6 +140,7 @@ func runScript(sc script.Script, acc account.Account, running *[]script.Script, 
 		L.SetGlobal("username", lua.LString(username))
 		L.SetGlobal("script_name", lua.LString(sc.GetName()))
 		L.SetGlobal("print", L.NewFunction(func(L *lua.LState) int { io.WriteString(logFile, L.ToString(1)+"\n"); return 0 }))
+		L.SetGlobal("file_create", L.NewFunction(luaFileCreate))
 
 		if err := L.DoFile("userdata/" + username + "/scripts/" + sc.GetName() + ".lua"); err != nil {
 			logger.Error(err)
