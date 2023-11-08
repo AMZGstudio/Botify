@@ -83,7 +83,7 @@ class MainClass
 
         if (data.code == RequestCode.Action)
         {
-            string command = jsonMessage.RootElement.GetProperty("action").ToString();
+            string command = jsonMessage.RootElement.GetProperty("command").ToString();
             Console.WriteLine("received command: " + command);
 
             string[] vals = command.Split(' ');
